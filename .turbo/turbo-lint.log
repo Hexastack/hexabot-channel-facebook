@@ -1,0 +1,5 @@
+ WARN  Unsupported engine: wanted: {"node":"^20.19.0"} (current: {"node":"v20.18.1","pnpm":"9.12.0"})
+
+> hexabot-channel-facebook@3.2.2-alpha.0 lint /Users/lapin/Workspace/hexabot/hexabot_community/packages/channel-facebook
+> eslint "src/**/*.ts" "jest.config.ts"
+
