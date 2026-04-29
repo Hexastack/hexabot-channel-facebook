@@ -27,10 +27,13 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:publish": "npm run clean && npm run build && npm run check:dist",
+    "check:dist": "test -f dist/index.js && test -f dist/index.channel.js",
     "clean": "rimraf dist coverage",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" \"jest.config.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" \"jest.config.ts\" --fix",
+    "prepublishOnly": "npm run build:publish",
     "release:patch": "npm version patch && git push origin main --tags",
     "release:minor": "npm version minor && git push origin main --tags",
     "test": "jest --config jest.config.ts",

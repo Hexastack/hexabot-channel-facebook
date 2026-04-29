@@ -52,15 +52,11 @@ jobs:
             echo "should_publish=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build package
+      - name: Build dist from source
         if: steps.npm-version.outputs.should_publish == 'true'
-        run: |
-          npm run clean
-          npm run build
-          test -f dist/index.js
-          test -f dist/index.channel.js
+        run: npm run build:publish
 
-      - name: Verify package contents
+      - name: Verify npm package contents
         if: steps.npm-version.outputs.should_publish == 'true'
         run: npm pack --dry-run
 
