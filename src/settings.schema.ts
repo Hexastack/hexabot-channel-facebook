@@ -15,7 +15,7 @@ const commaSeparatedValues = (value: string): string[] =>
     .filter(Boolean);
 
 export const FACEBOOK_DEFAULT_USER_FIELDS =
-  'first_name,last_name,profile_pic,locale,timezone,gender';
+  'first_name,last_name,profile_pic';
 
 const credentialSetting = (title: string, description: string) =>
   z.string().default('').meta({
