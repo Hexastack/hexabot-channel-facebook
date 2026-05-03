@@ -17,23 +17,33 @@ const commaSeparatedValues = (value: string): string[] =>
 export const FACEBOOK_DEFAULT_USER_FIELDS =
   'first_name,last_name,profile_pic,locale,timezone,gender';
 
+const credentialSetting = (title: string, description: string) =>
+  z.string().default('').meta({
+    title,
+    description,
+    'ui:widget': 'AutoCompleteWidget',
+    'ui:options': {
+      entity: 'Credential',
+      valueKey: 'id',
+      labelKey: 'name',
+      enableEntityAddButton: true,
+    },
+  });
+
 export const FACEBOOK_CHANNEL_SOURCE_SETTINGS_SCHEMA = z
   .strictObject({
-    app_secret: z.string().default('').meta({
-      title: 'App secret',
-      description: 'Facebook app secret used to verify webhook signatures.',
-      'ui:widget': 'password',
-    }),
-    page_access_token: z.string().default('').meta({
-      title: 'Page access token',
-      description: 'Page-scoped access token used for Graph API calls.',
-      'ui:widget': 'password',
-    }),
-    verify_token: z.string().default('').meta({
-      title: 'Verify token',
-      description: 'Token that Facebook sends during webhook verification.',
-      'ui:widget': 'password',
-    }),
+    app_secret: credentialSetting(
+      'App secret credential',
+      'Credential containing the Facebook app secret used to verify webhook signatures.',
+    ),
+    page_access_token: credentialSetting(
+      'Page access token credential',
+      'Credential containing the page-scoped access token used for Graph API calls.',
+    ),
+    verify_token: credentialSetting(
+      'Verify token credential',
+      'Credential containing the token that Facebook sends during webhook verification.',
+    ),
     page_id: z.string().default('').meta({
       title: 'Page ID',
       description:
@@ -94,5 +104,17 @@ export type FacebookChannelSettings = z.infer<
   typeof FACEBOOK_CHANNEL_SOURCE_SETTINGS_SCHEMA
 >;
 
-export const parseFacebookUserFields = (settings: FacebookChannelSettings) =>
-  commaSeparatedValues(settings.user_fields);
+export const FACEBOOK_CREDENTIAL_SETTING_KEYS = [
+  'app_secret',
+  'page_access_token',
+  'verify_token',
+] as const;
+
+export type FacebookCredentialSettingKey =
+  (typeof FACEBOOK_CREDENTIAL_SETTING_KEYS)[number];
+
+export type FacebookResolvedChannelSettings = FacebookChannelSettings;
+
+export const parseFacebookUserFields = (
+  settings: Pick<FacebookChannelSettings, 'user_fields'>,
+) => commaSeparatedValues(settings.user_fields);

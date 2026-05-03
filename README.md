@@ -19,7 +19,8 @@ Before configuring the channel, make sure you have:
 - a Facebook account with access to [Meta for Developers](https://developers.facebook.com/);
 - a Facebook Page that the bot will use to talk to Messenger users;
 - a public HTTPS URL for your Hexabot API. For local testing, expose the API with a tunnel such as ngrok;
-- a Hexabot source created with the `facebook` channel.
+- a Hexabot source created with the `facebook` channel;
+- Hexabot credentials created for the Meta app secret, Page access token, and webhook verify token.
 
 ## Facebook App Setup
 
@@ -37,11 +38,11 @@ Before configuring the channel, make sure you have:
 
 ### 3. Configure the Hexabot Source
 
-In Hexabot, open the `facebook` source and set:
+In Hexabot, create credentials for the sensitive values, then open the `facebook` source and set:
 
-- `app_secret`: the Meta app secret from **Settings > Basic**.
-- `page_access_token`: the Page access token generated from the Messenger settings or Access Token Tool.
-- `verify_token`: any secure random string you choose. You will enter the same value in Meta during webhook setup.
+- `app_secret`: the credential containing the Meta app secret from **Settings > Basic**.
+- `page_access_token`: the credential containing the Page access token generated from the Messenger settings or Access Token Tool.
+- `verify_token`: the credential containing any secure random string you choose. You will enter the same value in Meta during webhook setup.
 - `page_id`: optional, but recommended when one app is connected to several Pages.
 - `app_id`: optional operator reference for the Meta app ID.
 
@@ -58,7 +59,7 @@ https://<your-domain>/api/webhook/<sourceRef>
 In the Messenger webhook setup:
 
 1. Use the URL above as the **Callback URL**.
-2. Use the source `verify_token` as the **Verify Token**.
+2. Use the value stored in the source `verify_token` credential as the **Verify Token**.
 3. Verify and save the webhook.
 
 Subscribe the app/Page to these fields:
@@ -75,9 +76,9 @@ After saving, send a message to the connected Facebook Page and confirm that a n
 
 Required settings:
 
-- `app_secret`: Facebook app secret used to verify webhook signatures.
-- `page_access_token`: Page token used for Send API, profile, attachment, and label calls.
-- `verify_token`: Token used for webhook verification.
+- `app_secret`: credential containing the Facebook app secret used to verify webhook signatures.
+- `page_access_token`: credential containing the Page token used for Send API, profile, attachment, and label calls.
+- `verify_token`: credential containing the token used for webhook verification.
 
 Optional settings:
 
@@ -88,7 +89,7 @@ Optional settings:
 - `sync_messenger_profile`: syncs Messenger profile settings when the source or Hexabot menu changes.
 - `thread_inactivity_hours`: controls v3 thread rollover behavior.
 
-Use one Hexabot source per Facebook Page. Each source owns its own token and settings.
+Use one Hexabot source per Facebook Page. Each source owns its own credential references and settings.
 
 ## Supported Messages
 

@@ -9,6 +9,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import {
   ChannelCapabilities,
   ChannelHealthContext,
+  CredentialService,
   DEFAULT_CHANNEL_CAPABILITIES,
   ExtensionInject,
   HttpChannelHandler,
@@ -28,6 +29,7 @@ import type {
   StdOutgoingMessageEnvelope,
 } from '@hexabot-ai/types';
 import { Inject, Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Request, Response } from 'express';
 
@@ -42,9 +44,12 @@ import {
 } from './outbound';
 import { FacebookGraphApiService } from './services';
 import {
+  FACEBOOK_CREDENTIAL_SETTING_KEYS,
   FACEBOOK_CHANNEL_NAME,
   FACEBOOK_CHANNEL_SOURCE_SETTINGS_SCHEMA,
+  FacebookCredentialSettingKey,
   FacebookChannelSettings,
+  FacebookResolvedChannelSettings,
 } from './settings.schema';
 import { Facebook } from './types';
 
@@ -76,6 +81,9 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   @Inject(LanguageService)
   private readonly languageService!: LanguageService;
 
+  @Inject(ModuleRef)
+  private readonly credentialsModuleRef!: ModuleRef;
+
   @ExtensionInject((name) => createFacebookInboundEventDecoder(name))
   private inboundEventDecoder!: FacebookInboundEventDecoder<
     typeof FACEBOOK_CHANNEL_NAME
@@ -86,6 +94,8 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
 
   @ExtensionInject(FacebookGraphApiService)
   private graphApi!: FacebookGraphApiService;
+
+  private credentialService?: CredentialService;
 
   constructor() {
     super(FACEBOOK_CHANNEL_NAME, FACEBOOK_CHANNEL_SOURCE_SETTINGS_SCHEMA);
@@ -104,7 +114,9 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     res: Response,
     source: Source,
   ): Promise<void> {
-    const settings = this.parseSettings(source.settings);
+    const settings = await this.parseSettingsWithCredentials(source.settings, [
+      'verify_token',
+    ]);
     const mode = this.getQueryParam(req, 'hub.mode');
     const token = this.getQueryParam(req, 'hub.verify_token');
     const challenge = this.getQueryParam(req, 'hub.challenge');
@@ -128,7 +140,9 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     _res: Response,
     source: Source,
   ): Promise<void> {
-    const settings = this.parseSettings(source.settings);
+    const settings = await this.parseSettingsWithCredentials(source.settings, [
+      'app_secret',
+    ]);
 
     if (!settings.app_secret) {
       throw new Error('Facebook app secret is required');
@@ -220,7 +234,10 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     envelope: StdOutgoingMessageEnvelope,
     options: ActionOptions,
   ): Promise<{ mid: string }> {
-    const settings = this.parseSettings(event.getSourceSettings());
+    const settings = await this.parseSettingsWithCredentials(
+      event.getSourceSettings(),
+      ['page_access_token'],
+    );
     const sourceId = event.getSourceId();
 
     if (!sourceId) {
@@ -269,7 +286,10 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   async getSubscriberData(
     event: MessageInboundEvent<typeof FACEBOOK_CHANNEL_NAME>,
   ): Promise<SubscriberCreateDto> {
-    const settings = this.parseSettings(event.getSourceSettings());
+    const settings = await this.parseSettingsWithCredentials(
+      event.getSourceSettings(),
+      ['page_access_token'],
+    );
     const sourceId = event.getSourceId();
     const foreignId = event.getSenderForeignId();
     const profile = await this.getProfileSafe(settings, foreignId);
@@ -303,7 +323,10 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   async getSubscriberAvatar(
     event: MessageInboundEvent<typeof FACEBOOK_CHANNEL_NAME>,
   ) {
-    const settings = this.parseSettings(event.getSourceSettings());
+    const settings = await this.parseSettingsWithCredentials(
+      event.getSourceSettings(),
+      ['page_access_token'],
+    );
     const profile = await this.getProfileSafe(
       settings,
       event.getSenderForeignId(),
@@ -343,22 +366,31 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
 
   async getIntegrationHealth(context: ChannelHealthContext) {
     const activeSources = context.sources.filter((source) => source.state);
-    const missingSecrets = activeSources.filter((source) => {
-      const settings = this.parseSettings(source.settings);
+    const missingSecrets = (
+      await Promise.all(
+        activeSources.map(async (source) => {
+          const settings = this.parseSettings(source.settings);
 
-      return (
-        !settings.app_secret ||
-        !settings.page_access_token ||
-        !settings.verify_token
-      );
-    });
+          if (!this.hasCredentialRefs(settings)) {
+            return source;
+          }
+
+          const resolvedSettings = await this.resolveSettingsCredentials(
+            settings,
+            FACEBOOK_CREDENTIAL_SETTING_KEYS,
+          );
+
+          return this.hasCredentialValues(resolvedSettings) ? null : source;
+        }),
+      )
+    ).filter((source): source is Source => source !== null);
 
     if (activeSources.length === 0 || missingSecrets.length === 0) {
       return {
         ...context.defaultHealth,
         details: {
           ...(context.defaultHealth.details ?? {}),
-          requiredSettings: ['app_secret', 'page_access_token', 'verify_token'],
+          requiredSettings: [...FACEBOOK_CREDENTIAL_SETTING_KEYS],
         },
       } satisfies Partial<IntegrationHealthItem>;
     }
@@ -372,7 +404,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
       details: {
         activeSources: activeSources.length,
         missingRequiredSettings: missingSecrets.length,
-        requiredSettings: ['app_secret', 'page_access_token', 'verify_token'],
+        requiredSettings: [...FACEBOOK_CREDENTIAL_SETTING_KEYS],
       },
     } satisfies Partial<IntegrationHealthItem>;
   }
@@ -424,7 +456,9 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
       return;
     }
 
-    const settings = this.parseSettings(source.settings);
+    const settings = await this.parseSettingsWithCredentials(source.settings, [
+      'page_access_token',
+    ]);
 
     if (!settings.page_access_token) {
       return;
@@ -471,7 +505,9 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   }
 
   private async syncSourceMessengerProfile(source: Source): Promise<void> {
-    const settings = this.parseSettings(source.settings);
+    const settings = await this.parseSettingsWithCredentials(source.settings, [
+      'page_access_token',
+    ]);
 
     if (!source.state || !settings.sync_messenger_profile) {
       return;
@@ -576,7 +612,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   }
 
   private async getProfileSafe(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     psid: string,
   ): Promise<Facebook.UserProfile> {
     if (!settings.page_access_token) {
@@ -619,6 +655,68 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
 
   private parseSettings(settings: unknown): FacebookChannelSettings {
     return FACEBOOK_CHANNEL_SOURCE_SETTINGS_SCHEMA.parse(settings ?? {});
+  }
+
+  private async parseSettingsWithCredentials(
+    settings: unknown,
+    credentialKeys: readonly FacebookCredentialSettingKey[],
+  ): Promise<FacebookResolvedChannelSettings> {
+    return await this.resolveSettingsCredentials(
+      this.parseSettings(settings),
+      credentialKeys,
+    );
+  }
+
+  private async resolveSettingsCredentials(
+    settings: FacebookChannelSettings,
+    credentialKeys: readonly FacebookCredentialSettingKey[],
+  ): Promise<FacebookResolvedChannelSettings> {
+    const resolvedSettings = { ...settings };
+
+    await Promise.all(
+      credentialKeys.map(async (key) => {
+        resolvedSettings[key] = await this.resolveCredentialValue(settings[key]);
+      }),
+    );
+
+    return resolvedSettings;
+  }
+
+  private async resolveCredentialValue(credentialId: string): Promise<string> {
+    const id = credentialId.trim();
+
+    if (!id) {
+      return '';
+    }
+
+    const value = await this.getCredentialService().findOneValue(id);
+
+    return value.trim();
+  }
+
+  private getCredentialService(): CredentialService {
+    if (!this.credentialService) {
+      this.credentialService = this.credentialsModuleRef.get(
+        CredentialService,
+        { strict: false },
+      );
+    }
+
+    return this.credentialService;
+  }
+
+  private hasCredentialRefs(settings: FacebookChannelSettings): boolean {
+    return FACEBOOK_CREDENTIAL_SETTING_KEYS.every((key) =>
+      Boolean(settings[key].trim()),
+    );
+  }
+
+  private hasCredentialValues(
+    settings: FacebookResolvedChannelSettings,
+  ): boolean {
+    return FACEBOOK_CREDENTIAL_SETTING_KEYS.every((key) =>
+      Boolean(settings[key].trim()),
+    );
   }
 
   private getQueryParam(req: Request, key: string): string | null {

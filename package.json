@@ -44,6 +44,7 @@
     "@hexabot-ai/types": ">=3.0.2-alpha.0 <4",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
     "@nestjs/event-emitter": "^3.0.1",
     "rxjs": "^7.8.2",
     "zod": "^4.3.6"
@@ -54,6 +55,7 @@
     "@hexabot-ai/types": ">=3.0.2-alpha.0 <4",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
     "@nestjs/event-emitter": "^3.0.1",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",

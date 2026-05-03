@@ -32,12 +32,17 @@ const source = {
   channel: FACEBOOK_CHANNEL_NAME,
   state: true,
   settings: {
-    app_secret: 'secret',
-    page_access_token: 'page-token',
-    verify_token: 'verify-token',
+    app_secret: 'credential-app-secret',
+    page_access_token: 'credential-page-token',
+    verify_token: 'credential-verify-token',
     page_id: 'page-1',
   },
 } as unknown as Source;
+const credentialValues: Record<string, string> = {
+  'credential-app-secret': 'secret',
+  'credential-page-token': 'page-token',
+  'credential-verify-token': 'verify-token',
+};
 const buildRequest = (body: unknown, headers: Record<string, string> = {}) =>
   ({
     body,
@@ -54,6 +59,11 @@ describe('FacebookChannelHandler webhook security', () => {
     (handler as any).logger = {
       warn: jest.fn(),
       error: jest.fn(),
+    };
+    (handler as any).credentialService = {
+      findOneValue: jest.fn(
+        async (credentialId: string) => credentialValues[credentialId] ?? '',
+      ),
     };
     (handler as any).inboundEventDecoder = new FacebookInboundEventDecoder(
       FACEBOOK_CHANNEL_NAME,

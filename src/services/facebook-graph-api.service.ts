@@ -13,7 +13,7 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 
 import {
-  FacebookChannelSettings,
+  FacebookResolvedChannelSettings,
   parseFacebookUserFields,
 } from '../settings.schema';
 import { Facebook } from '../types';
@@ -24,7 +24,10 @@ const GRAPH_API_BASE_URL = 'https://graph.facebook.com';
 export class FacebookGraphApiService {
   constructor(private readonly httpService: HttpService) {}
 
-  private buildUrl(settings: FacebookChannelSettings, path: string): string {
+  private buildUrl(
+    settings: Pick<FacebookResolvedChannelSettings, 'graph_api_version'>,
+    path: string,
+  ): string {
     const version = settings.graph_api_version.replace(/^\/+|\/+$/g, '');
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
@@ -32,7 +35,7 @@ export class FacebookGraphApiService {
   }
 
   private async request<T>(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     config: AxiosRequestConfig,
   ): Promise<T> {
     const response = await firstValueFrom(
@@ -49,7 +52,7 @@ export class FacebookGraphApiService {
   }
 
   async sendMessage(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     payload: Facebook.SendApiPayload,
   ): Promise<Facebook.SendApiResponse> {
     return await this.request<Facebook.SendApiResponse>(settings, {
@@ -60,7 +63,7 @@ export class FacebookGraphApiService {
   }
 
   async sendSenderAction(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     recipientId: string,
     senderAction: 'typing_on' | 'typing_off',
   ): Promise<void> {
@@ -73,7 +76,7 @@ export class FacebookGraphApiService {
   }
 
   async getUserProfile(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     psid: string,
   ): Promise<Facebook.UserProfile> {
     return await this.request<Facebook.UserProfile>(settings, {
@@ -86,7 +89,7 @@ export class FacebookGraphApiService {
   }
 
   async setMessengerProfile(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     profile: Facebook.MessengerProfile,
   ): Promise<void> {
     await this.request(settings, {
@@ -97,7 +100,7 @@ export class FacebookGraphApiService {
   }
 
   async deleteMessengerProfile(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     fields: Array<keyof Facebook.MessengerProfile>,
   ): Promise<void> {
     await this.request(settings, {
@@ -110,7 +113,7 @@ export class FacebookGraphApiService {
   }
 
   async addPsidToCustomLabel(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     labelId: string,
     psid: string,
   ): Promise<void> {
@@ -124,7 +127,7 @@ export class FacebookGraphApiService {
   }
 
   async removePsidFromCustomLabel(
-    settings: FacebookChannelSettings,
+    settings: FacebookResolvedChannelSettings,
     labelId: string,
     psid: string,
   ): Promise<void> {
