@@ -1,6 +1,6 @@
 {
   "name": "hexabot-channel-facebook",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "Facebook Messenger channel extension for Hexabot v3.",
   "author": "Hexastack",
   "license": "FCL-1.0-ALv2",
