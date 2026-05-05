@@ -8,9 +8,9 @@ import {
   IncomingMessageType,
   PayloadType,
   StdEventType,
-} from '@hexabot-ai/types';
+} from "@hexabot-ai/types";
 
-import { FacebookInboundEventDecoder } from '../inbound';
+import { FacebookInboundEventDecoder } from "../inbound";
 import {
   FacebookAttachmentMessageInboundEvent,
   FacebookDeliveryInboundEvent,
@@ -20,16 +20,16 @@ import {
   FacebookQuickReplyInboundEvent,
   FacebookReadInboundEvent,
   FacebookTextMessageInboundEvent,
-} from '../inbound/events';
-import { FACEBOOK_CHANNEL_NAME } from '../settings.schema';
+} from "../inbound/events";
+import { FACEBOOK_CHANNEL_NAME } from "../settings.schema";
 
 const attrs = {
-  pageId: 'page-1',
-  recipientId: 'page-1',
+  pageId: "page-1",
+  recipientId: "page-1",
 };
 const baseEvent = {
-  sender: { id: 'user-1' },
-  recipient: { id: 'page-1' },
+  sender: { id: "user-1" },
+  recipient: { id: "page-1" },
   timestamp: 1710000000000,
 };
 const expectFacebookEvent = <T>(
@@ -41,16 +41,16 @@ const expectFacebookEvent = <T>(
   return event as T;
 };
 
-describe('FacebookInboundEventDecoder', () => {
+describe("FacebookInboundEventDecoder", () => {
   const decoder = new FacebookInboundEventDecoder(FACEBOOK_CHANNEL_NAME);
 
-  it('decodes text messages', () => {
+  it("decodes text messages", () => {
     const [event] = decoder.createEvents(
       {
         ...baseEvent,
         message: {
-          mid: 'm-text',
-          text: 'hello',
+          mid: "m-text",
+          text: "hello",
         },
       },
       attrs,
@@ -61,22 +61,22 @@ describe('FacebookInboundEventDecoder', () => {
     );
 
     expect(messageEvent.getEventType()).toBe(StdEventType.message);
-    expect(messageEvent.getSenderForeignId()).toBe('user-1');
+    expect(messageEvent.getSenderForeignId()).toBe("user-1");
     expect(messageEvent.getMessage()).toEqual({
       type: IncomingMessageType.text,
-      data: { text: 'hello' },
+      data: { text: "hello" },
     });
   });
 
-  it('decodes quick replies with string payloads', () => {
+  it("decodes quick replies with string payloads", () => {
     const [event] = decoder.createEvents(
       {
         ...baseEvent,
         message: {
-          mid: 'm-qr',
-          text: 'Blue',
+          mid: "m-qr",
+          text: "Blue",
           quick_reply: {
-            payload: 'COLOR_BLUE',
+            payload: "COLOR_BLUE",
           },
         },
       },
@@ -87,17 +87,17 @@ describe('FacebookInboundEventDecoder', () => {
       FacebookQuickReplyInboundEvent,
     );
 
-    expect(messageEvent.getPayload()).toBe('COLOR_BLUE');
+    expect(messageEvent.getPayload()).toBe("COLOR_BLUE");
   });
 
-  it('decodes postbacks including get started payloads', () => {
+  it("decodes postbacks including get started payloads", () => {
     const [event] = decoder.createEvents(
       {
         ...baseEvent,
         postback: {
-          mid: 'm-postback',
-          title: 'Get Started',
-          payload: 'GET_STARTED',
+          mid: "m-postback",
+          title: "Get Started",
+          payload: "GET_STARTED",
         },
       },
       attrs,
@@ -107,18 +107,18 @@ describe('FacebookInboundEventDecoder', () => {
       FacebookPostbackInboundEvent,
     );
 
-    expect(messageEvent.getPayload()).toBe('GET_STARTED');
+    expect(messageEvent.getPayload()).toBe("GET_STARTED");
   });
 
-  it('decodes location attachments', () => {
+  it("decodes location attachments", () => {
     const [event] = decoder.createEvents(
       {
         ...baseEvent,
         message: {
-          mid: 'm-location',
+          mid: "m-location",
           attachments: [
             {
-              type: 'location',
+              type: "location",
               payload: {
                 coordinates: {
                   lat: 36.8,
@@ -145,17 +145,17 @@ describe('FacebookInboundEventDecoder', () => {
     });
   });
 
-  it('decodes remote attachment messages', () => {
+  it("decodes remote attachment messages", () => {
     const [event] = decoder.createEvents(
       {
         ...baseEvent,
         message: {
-          mid: 'm-file',
+          mid: "m-file",
           attachments: [
             {
-              type: 'image',
+              type: "image",
               payload: {
-                url: 'https://example.com/image.png',
+                url: "https://example.com/image.png",
               },
             },
           ],
@@ -171,13 +171,13 @@ describe('FacebookInboundEventDecoder', () => {
     expect(messageEvent.getRemoteAttachments()).toHaveLength(1);
   });
 
-  it('decodes delivery and read receipts against the subscriber id', () => {
+  it("decodes delivery and read receipts against the subscriber id", () => {
     const [delivery] = decoder.createEvents(
       {
-        sender: { id: 'page-1' },
-        recipient: { id: 'user-1' },
+        sender: { id: "page-1" },
+        recipient: { id: "user-1" },
         delivery: {
-          mids: ['m-1', 'm-2'],
+          mids: ["m-1", "m-2"],
           watermark: 1710000000000,
         },
       },
@@ -185,8 +185,8 @@ describe('FacebookInboundEventDecoder', () => {
     );
     const [read] = decoder.createEvents(
       {
-        sender: { id: 'page-1' },
-        recipient: { id: 'user-1' },
+        sender: { id: "page-1" },
+        recipient: { id: "user-1" },
         read: {
           watermark: 1710000001000,
         },
@@ -199,21 +199,21 @@ describe('FacebookInboundEventDecoder', () => {
     );
     const readEvent = expectFacebookEvent(read, FacebookReadInboundEvent);
 
-    expect(deliveryEvent.getSenderForeignId()).toBe('user-1');
-    expect(deliveryEvent.getDeliveredMessages()).toEqual(['m-1', 'm-2']);
-    expect(readEvent.getSenderForeignId()).toBe('user-1');
+    expect(deliveryEvent.getSenderForeignId()).toBe("user-1");
+    expect(deliveryEvent.getDeliveredMessages()).toEqual(["m-1", "m-2"]);
+    expect(readEvent.getSenderForeignId()).toBe("user-1");
     expect(readEvent.getWatermark()).toBe(1710000001000);
   });
 
-  it('decodes echo messages without resolving the page as subscriber', () => {
+  it("decodes echo messages without resolving the page as subscriber", () => {
     const [event] = decoder.createEvents(
       {
-        sender: { id: 'page-1' },
-        recipient: { id: 'user-1' },
+        sender: { id: "page-1" },
+        recipient: { id: "user-1" },
         message: {
-          mid: 'm-echo',
+          mid: "m-echo",
           is_echo: true,
-          text: 'sent by page',
+          text: "sent by page",
         },
       },
       attrs,
@@ -224,7 +224,7 @@ describe('FacebookInboundEventDecoder', () => {
     );
 
     expect(messageEvent.getEventType()).toBe(StdEventType.echo);
-    expect(messageEvent.getSenderForeignId()).toBe('user-1');
-    expect(messageEvent.getRecipientForeignId()).toBe('user-1');
+    expect(messageEvent.getSenderForeignId()).toBe("user-1");
+    expect(messageEvent.getRecipientForeignId()).toBe("user-1");
   });
 });

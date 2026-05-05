@@ -4,6 +4,6 @@
  * Full terms: see LICENSE.md.
  */
 
-export * from './events';
+export * from "./events";
 
-export * from './facebook-inbound-event-decoder';
+export * from "./facebook-inbound-event-decoder";

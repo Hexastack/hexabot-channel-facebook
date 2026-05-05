@@ -8,9 +8,9 @@ import {
   ChannelInboundEvent,
   ChannelInboundEventContext,
   ChannelName,
-} from '@hexabot-ai/api';
+} from "@hexabot-ai/api";
 
-import { Facebook } from '../../types';
+import { Facebook } from "../../types";
 
 export abstract class BaseFacebookInboundEvent<
   N extends ChannelName = ChannelName,
@@ -25,7 +25,7 @@ export abstract class BaseFacebookInboundEvent<
       Facebook.DecodedMessaging,
       SubscriberChannelDict[N]
     >,
-    handler?: Parameters<ChannelInboundEvent<N>['setHandler']>[0],
+    handler?: Parameters<ChannelInboundEvent<N>["setHandler"]>[0],
   ) {
     super(context, handler);
   }

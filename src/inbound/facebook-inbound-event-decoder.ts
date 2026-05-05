@@ -4,39 +4,34 @@
  * Full terms: see LICENSE.md.
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID } from "crypto";
 
 import {
   ChannelInboundEvent,
   ChannelInboundEventContext,
   ChannelInboundEventDecoder,
   ChannelName,
-} from '@hexabot-ai/api';
-import { Injectable, Type } from '@nestjs/common';
+} from "@hexabot-ai/api";
+import { Injectable, Type } from "@nestjs/common";
 
-import { Facebook } from '../types';
+import { Facebook } from "../types";
 
-import FacebookDeliveryInboundEvent from './events/delivery.event';
-import FacebookAttachmentMessageInboundEvent from './events/messages/attachment.event';
-import FacebookEchoMessageInboundEvent from './events/messages/echo.event';
-import FacebookLocationMessageInboundEvent from './events/messages/location.event';
-import FacebookPostbackInboundEvent from './events/messages/postback.event';
-import FacebookQuickReplyInboundEvent from './events/messages/quick-reply.event';
-import FacebookTextMessageInboundEvent from './events/messages/text.event';
-import FacebookReadInboundEvent from './events/read.event';
+import FacebookDeliveryInboundEvent from "./events/delivery.event";
+import FacebookAttachmentMessageInboundEvent from "./events/messages/attachment.event";
+import FacebookEchoMessageInboundEvent from "./events/messages/echo.event";
+import FacebookLocationMessageInboundEvent from "./events/messages/location.event";
+import FacebookPostbackInboundEvent from "./events/messages/postback.event";
+import FacebookQuickReplyInboundEvent from "./events/messages/quick-reply.event";
+import FacebookTextMessageInboundEvent from "./events/messages/text.event";
+import FacebookReadInboundEvent from "./events/read.event";
 
-export class FacebookInboundEventDecoder<N extends ChannelName = ChannelName>
-  implements
-    ChannelInboundEventDecoder<
-      N,
-      ChannelInboundEvent<
-        N,
-        Facebook.DecodedMessaging,
-        SubscriberChannelDict[N]
-      >,
-      SubscriberChannelDict[N]
-    >
-{
+export class FacebookInboundEventDecoder<
+  N extends ChannelName = ChannelName,
+> implements ChannelInboundEventDecoder<
+  N,
+  ChannelInboundEvent<N, Facebook.DecodedMessaging, SubscriberChannelDict[N]>,
+  SubscriberChannelDict[N]
+> {
   readonly channel: N;
 
   constructor(channel: N) {
@@ -79,7 +74,7 @@ export class FacebookInboundEventDecoder<N extends ChannelName = ChannelName>
     }
 
     if (event.postback) {
-      const payload = event.postback.payload ?? event.postback.title ?? '';
+      const payload = event.postback.payload ?? event.postback.title ?? "";
 
       return new FacebookPostbackInboundEvent(
         this.createMessageContext(event, channelAttrs),
@@ -95,7 +90,7 @@ export class FacebookInboundEventDecoder<N extends ChannelName = ChannelName>
     if (event.message.is_echo) {
       return new FacebookEchoMessageInboundEvent(
         this.createEchoContext(event, channelAttrs),
-        event.message.text ?? '',
+        event.message.text ?? "",
       );
     }
 
@@ -117,7 +112,7 @@ export class FacebookInboundEventDecoder<N extends ChannelName = ChannelName>
     }
 
     const downloadableAttachments = (event.message.attachments ?? []).filter(
-      (attachment) => attachment.type !== 'location',
+      (attachment) => attachment.type !== "location",
     );
     if (downloadableAttachments.length > 0) {
       return new FacebookAttachmentMessageInboundEvent(
@@ -126,7 +121,7 @@ export class FacebookInboundEventDecoder<N extends ChannelName = ChannelName>
       );
     }
 
-    if (typeof event.message.text === 'string') {
+    if (typeof event.message.text === "string") {
       return new FacebookTextMessageInboundEvent(
         this.createMessageContext(event, channelAttrs),
         event.message.text,
@@ -208,7 +203,7 @@ export class FacebookInboundEventDecoder<N extends ChannelName = ChannelName>
   private getOccurredAt(event: Facebook.DecodedMessaging): Date {
     const timestamp = event.timestamp;
 
-    if (typeof timestamp === 'number') {
+    if (typeof timestamp === "number") {
       const date = new Date(timestamp);
 
       if (!Number.isNaN(date.getTime())) {
@@ -244,7 +239,7 @@ export class FacebookInboundEventDecoder<N extends ChannelName = ChannelName>
   ): Facebook.Attachment | undefined {
     return attachments?.find(
       (attachment) =>
-        attachment.type === 'location' && !!attachment.payload.coordinates,
+        attachment.type === "location" && !!attachment.payload.coordinates,
     );
   }
 }

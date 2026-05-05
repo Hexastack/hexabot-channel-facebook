@@ -8,17 +8,17 @@ import {
   FACEBOOK_CHANNEL_SOURCE_SETTINGS_SCHEMA,
   FACEBOOK_DEFAULT_USER_FIELDS,
   parseFacebookUserFields,
-} from '../settings.schema';
+} from "../settings.schema";
 
-describe('Facebook channel settings', () => {
-  it('applies secure defaults', () => {
+describe("Facebook channel settings", () => {
+  it("applies secure defaults", () => {
     const settings = FACEBOOK_CHANNEL_SOURCE_SETTINGS_SCHEMA.parse({});
 
     expect(settings).toMatchObject({
-      app_secret: '',
-      page_access_token: '',
-      verify_token: '',
-      graph_api_version: 'v25.0',
+      app_secret: "",
+      page_access_token: "",
+      verify_token: "",
+      graph_api_version: "v25.0",
       user_fields: FACEBOOK_DEFAULT_USER_FIELDS,
       persistent_menu: true,
       composer_input_disabled: false,
@@ -27,15 +27,15 @@ describe('Facebook channel settings', () => {
     });
   });
 
-  it('parses comma-separated profile fields', () => {
+  it("parses comma-separated profile fields", () => {
     const settings = FACEBOOK_CHANNEL_SOURCE_SETTINGS_SCHEMA.parse({
-      user_fields: 'first_name, last_name, , profile_pic',
+      user_fields: "first_name, last_name, , profile_pic",
     });
 
     expect(parseFacebookUserFields(settings)).toEqual([
-      'first_name',
-      'last_name',
-      'profile_pic',
+      "first_name",
+      "last_name",
+      "profile_pic",
     ]);
   });
 });

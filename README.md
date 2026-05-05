@@ -77,7 +77,7 @@ After saving, send a message to the connected Facebook Page and confirm that a n
 Required settings:
 
 - `app_secret`: credential containing the Facebook app secret used to verify webhook signatures.
-- `page_access_token`: credential containing the Page token used for Send API, profile, attachment, and label calls.
+- `page_access_token`: credential containing the Page token used for Send API, profile, and attachment calls.
 - `verify_token`: credential containing the token used for webhook verification.
 
 Optional settings:

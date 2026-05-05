@@ -4,4 +4,4 @@
  * Full terms: see LICENSE.md.
  */
 
-export * from './facebook-graph-api.service';
+export * from "./facebook-graph-api.service";

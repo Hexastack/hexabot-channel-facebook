@@ -8,19 +8,19 @@ import {
   AttachmentOrmEntity,
   ChannelInboundEventContext,
   ChannelName,
-} from '@hexabot-ai/api';
-import type { Attachment } from '@hexabot-ai/types';
+} from "@hexabot-ai/api";
+import type { Attachment } from "@hexabot-ai/types";
 import {
   FileType,
   IncomingMessageType,
   Payload,
   PayloadType,
   StdIncomingMessage,
-} from '@hexabot-ai/types';
+} from "@hexabot-ai/types";
 
-import { Facebook } from '../../../types';
+import { Facebook } from "../../../types";
 
-import FacebookMessageInboundEvent from './facebook-message.event';
+import FacebookMessageInboundEvent from "./facebook-message.event";
 
 export class FacebookAttachmentMessageInboundEvent<
   N extends ChannelName = ChannelName,
@@ -66,7 +66,7 @@ export class FacebookAttachmentMessageInboundEvent<
 
   private requireResolvedAttachments(): Attachment[] {
     if (this.persistedAttachments.length === 0) {
-      throw new Error('Attachment has not been processed');
+      throw new Error("Attachment has not been processed");
     }
 
     return this.persistedAttachments;
@@ -104,7 +104,7 @@ export class FacebookAttachmentMessageInboundEvent<
 
         return `attachment:${fileType}:${name}`;
       })
-      .join('\n');
+      .join("\n");
 
     return {
       type: IncomingMessageType.attachment,

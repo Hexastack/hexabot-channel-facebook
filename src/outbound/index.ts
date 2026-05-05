@@ -4,4 +4,4 @@
  * Full terms: see LICENSE.md.
  */
 
-export * from './facebook-outbound-message-encoder';
+export * from "./facebook-outbound-message-encoder";

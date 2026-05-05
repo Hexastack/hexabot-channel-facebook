@@ -4,32 +4,32 @@
  * Full terms: see LICENSE.md.
  */
 
-import { Readable } from 'stream';
+import { Readable } from "stream";
 
-import { AttachmentFile } from '@hexabot-ai/api';
-import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
-import { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { firstValueFrom } from 'rxjs';
+import { AttachmentFile } from "@hexabot-ai/api";
+import { HttpService } from "@nestjs/axios";
+import { Injectable } from "@nestjs/common";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { firstValueFrom } from "rxjs";
 
 import {
   FacebookResolvedChannelSettings,
   parseFacebookUserFields,
-} from '../settings.schema';
-import { Facebook } from '../types';
+} from "../settings.schema";
+import { Facebook } from "../types";
 
-const GRAPH_API_BASE_URL = 'https://graph.facebook.com';
+const GRAPH_API_BASE_URL = "https://graph.facebook.com";
 
 @Injectable()
 export class FacebookGraphApiService {
   constructor(private readonly httpService: HttpService) {}
 
   private buildUrl(
-    settings: Pick<FacebookResolvedChannelSettings, 'graph_api_version'>,
+    settings: Pick<FacebookResolvedChannelSettings, "graph_api_version">,
     path: string,
   ): string {
-    const version = settings.graph_api_version.replace(/^\/+|\/+$/g, '');
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const version = settings.graph_api_version.replace(/^\/+|\/+$/g, "");
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
     return `${GRAPH_API_BASE_URL}/${version}${normalizedPath}`;
   }
@@ -56,8 +56,8 @@ export class FacebookGraphApiService {
     payload: Facebook.SendApiPayload,
   ): Promise<Facebook.SendApiResponse> {
     return await this.request<Facebook.SendApiResponse>(settings, {
-      method: 'POST',
-      url: this.buildUrl(settings, '/me/messages'),
+      method: "POST",
+      url: this.buildUrl(settings, "/me/messages"),
       data: payload,
     });
   }
@@ -65,7 +65,7 @@ export class FacebookGraphApiService {
   async sendSenderAction(
     settings: FacebookResolvedChannelSettings,
     recipientId: string,
-    senderAction: 'typing_on' | 'typing_off',
+    senderAction: "typing_on" | "typing_off",
   ): Promise<void> {
     await this.sendMessage(settings, {
       recipient: {
@@ -80,10 +80,10 @@ export class FacebookGraphApiService {
     psid: string,
   ): Promise<Facebook.UserProfile> {
     return await this.request<Facebook.UserProfile>(settings, {
-      method: 'GET',
+      method: "GET",
       url: this.buildUrl(settings, `/${psid}`),
       params: {
-        fields: parseFacebookUserFields(settings).join(','),
+        fields: parseFacebookUserFields(settings).join(","),
       },
     });
   }
@@ -93,8 +93,8 @@ export class FacebookGraphApiService {
     profile: Facebook.MessengerProfile,
   ): Promise<void> {
     await this.request(settings, {
-      method: 'POST',
-      url: this.buildUrl(settings, '/me/messenger_profile'),
+      method: "POST",
+      url: this.buildUrl(settings, "/me/messenger_profile"),
       data: profile,
     });
   }
@@ -104,38 +104,10 @@ export class FacebookGraphApiService {
     fields: Array<keyof Facebook.MessengerProfile>,
   ): Promise<void> {
     await this.request(settings, {
-      method: 'DELETE',
-      url: this.buildUrl(settings, '/me/messenger_profile'),
+      method: "DELETE",
+      url: this.buildUrl(settings, "/me/messenger_profile"),
       data: {
         fields,
-      },
-    });
-  }
-
-  async addPsidToCustomLabel(
-    settings: FacebookResolvedChannelSettings,
-    labelId: string,
-    psid: string,
-  ): Promise<void> {
-    await this.request(settings, {
-      method: 'POST',
-      url: this.buildUrl(settings, `/${labelId}/label`),
-      data: {
-        user: psid,
-      },
-    });
-  }
-
-  async removePsidFromCustomLabel(
-    settings: FacebookResolvedChannelSettings,
-    labelId: string,
-    psid: string,
-  ): Promise<void> {
-    await this.request(settings, {
-      method: 'DELETE',
-      url: this.buildUrl(settings, `/${labelId}/label`),
-      data: {
-        user: psid,
       },
     });
   }
@@ -143,7 +115,7 @@ export class FacebookGraphApiService {
   async downloadUrl(url: string, name?: string): Promise<AttachmentFile> {
     const response = await firstValueFrom(
       this.httpService.get<Readable>(url, {
-        responseType: 'stream',
+        responseType: "stream",
       }),
     );
 
@@ -155,9 +127,9 @@ export class FacebookGraphApiService {
     name?: string,
   ): AttachmentFile {
     const contentType = String(
-      response.headers['content-type'] ?? 'application/octet-stream',
-    ).split(';')[0];
-    const contentLength = Number(response.headers['content-length'] ?? 0);
+      response.headers["content-type"] ?? "application/octet-stream",
+    ).split(";")[0];
+    const contentLength = Number(response.headers["content-length"] ?? 0);
 
     return {
       file: response.data,
