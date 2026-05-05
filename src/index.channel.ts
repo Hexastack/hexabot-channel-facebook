@@ -13,7 +13,6 @@ import {
   DEFAULT_CHANNEL_CAPABILITIES,
   ExtensionInject,
   HttpChannelHandler,
-  LabelService,
   LanguageService,
   MenuService,
   MenuTree,
@@ -74,9 +73,6 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
 
   @Inject(MenuService)
   private readonly menuService!: MenuService;
-
-  @Inject(LabelService)
-  private readonly labelService!: LabelService;
 
   @Inject(LanguageService)
   private readonly languageService!: LanguageService;
@@ -435,75 +431,6 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     );
   }
 
-  @OnEvent("hook:subscriber:postUpdate", { async: true })
-  async handleSubscriberUpdated(event: EntityHookPayload<Record<string, any>>) {
-    const subscriber = event.entity;
-    const previous = event.databaseEntity;
-
-    if (!subscriber?.foreignId || !previous) {
-      return;
-    }
-
-    const sourceId = this.resolveEntityId(subscriber.source);
-
-    if (!sourceId) {
-      return;
-    }
-
-    const source = await this.sourceService.findOne(sourceId);
-
-    if (!source || source.channel !== FACEBOOK_CHANNEL_NAME) {
-      return;
-    }
-
-    const settings = await this.parseSettingsWithCredentials(source.settings, [
-      "page_access_token",
-    ]);
-
-    if (!settings.page_access_token) {
-      return;
-    }
-
-    const before = new Set(this.extractEntityIds(previous.labels));
-    const after = new Set(
-      this.extractEntityIds(subscriber.labels ?? event.payload?.labels),
-    );
-    const added = [...after].filter((id) => !before.has(id));
-    const removed = [...before].filter((id) => !after.has(id));
-
-    if (added.length === 0 && removed.length === 0) {
-      return;
-    }
-
-    const labels = await this.labelService.findAll();
-    const labelMap = new Map(labels.map((label) => [label.id, label]));
-
-    await Promise.all([
-      ...added.map(async (labelId) => {
-        const messengerLabelId = labelMap.get(labelId)?.label_id?.facebook;
-
-        if (messengerLabelId) {
-          await this.graphApi.addPsidToCustomLabel(
-            settings,
-            String(messengerLabelId),
-            subscriber.foreignId,
-          );
-        }
-      }),
-      ...removed.map(async (labelId) => {
-        const messengerLabelId = labelMap.get(labelId)?.label_id?.facebook;
-
-        if (messengerLabelId) {
-          await this.graphApi.removePsidFromCustomLabel(
-            settings,
-            String(messengerLabelId),
-            subscriber.foreignId,
-          );
-        }
-      }),
-    ]);
-  }
-
   private async syncSourceMessengerProfile(source: Source): Promise<void> {
     const settings = await this.parseSettingsWithCredentials(source.settings, [
       "page_access_token",
@@ -764,30 +691,6 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     }
 
     return `${attachment.type}-attachment`;
-  }
-
-  private resolveEntityId(value: unknown): string | null {
-    if (typeof value === "string") {
-      return value;
-    }
-
-    if (value && typeof value === "object" && "id" in value) {
-      const id = (value as { id?: unknown }).id;
-
-      return typeof id === "string" ? id : null;
-    }
-
-    return null;
-  }
-
-  private extractEntityIds(value: unknown): string[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value
-      .map((item) => this.resolveEntityId(item))
-      .filter((id): id is string => !!id);
   }
 
   private ensureHttpUrl(url: string): string {

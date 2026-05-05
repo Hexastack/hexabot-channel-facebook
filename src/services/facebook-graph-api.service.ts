@@ -112,34 +112,6 @@ export class FacebookGraphApiService {
     });
   }
 
-  async addPsidToCustomLabel(
-    settings: FacebookResolvedChannelSettings,
-    labelId: string,
-    psid: string,
-  ): Promise<void> {
-    await this.request(settings, {
-      method: "POST",
-      url: this.buildUrl(settings, `/${labelId}/label`),
-      data: {
-        user: psid,
-      },
-    });
-  }
-
-  async removePsidFromCustomLabel(
-    settings: FacebookResolvedChannelSettings,
-    labelId: string,
-    psid: string,
-  ): Promise<void> {
-    await this.request(settings, {
-      method: "DELETE",
-      url: this.buildUrl(settings, `/${labelId}/label`),
-      data: {
-        user: psid,
-      },
-    });
-  }
-
   async downloadUrl(url: string, name?: string): Promise<AttachmentFile> {
     const response = await firstValueFrom(
       this.httpService.get<Readable>(url, {
