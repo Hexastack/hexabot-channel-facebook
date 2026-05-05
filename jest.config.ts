@@ -4,17 +4,17 @@
  * Full terms: see LICENSE.md.
  */
 
-import type { Config } from 'jest';
+import type { Config } from "jest";
 
 const config: Config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  rootDir: '.',
-  testMatch: ['<rootDir>/src/**/*.spec.ts'],
-  moduleFileExtensions: ['ts', 'js', 'json'],
-  collectCoverageFrom: ['src/**/*.ts'],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  rootDir: ".",
+  testMatch: ["<rootDir>/src/**/*.spec.ts"],
+  moduleFileExtensions: ["ts", "js", "json"],
+  collectCoverageFrom: ["src/**/*.ts"],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/../api/src/$1',
+    "^@/(.*)$": "<rootDir>/../api/src/$1",
   },
 };
 

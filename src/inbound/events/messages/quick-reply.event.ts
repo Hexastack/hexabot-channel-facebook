@@ -4,12 +4,12 @@
  * Full terms: see LICENSE.md.
  */
 
-import { ChannelInboundEventContext, ChannelName } from '@hexabot-ai/api';
-import { IncomingMessageType, StdIncomingMessage } from '@hexabot-ai/types';
+import { ChannelInboundEventContext, ChannelName } from "@hexabot-ai/api";
+import { IncomingMessageType, StdIncomingMessage } from "@hexabot-ai/types";
 
-import { Facebook } from '../../../types';
+import { Facebook } from "../../../types";
 
-import FacebookMessageInboundEvent from './facebook-message.event';
+import FacebookMessageInboundEvent from "./facebook-message.event";
 
 export class FacebookQuickReplyInboundEvent<
   N extends ChannelName = ChannelName,

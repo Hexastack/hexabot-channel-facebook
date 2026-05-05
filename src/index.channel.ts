@@ -4,7 +4,7 @@
  * Full terms: see LICENSE.md.
  */
 
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from "crypto";
 
 import {
   ChannelCapabilities,
@@ -21,28 +21,28 @@ import {
   MessageInboundEvent,
   SourceService,
   SubscriberCreateDto,
-} from '@hexabot-ai/api';
+} from "@hexabot-ai/api";
 import type {
   ActionOptions,
   IntegrationHealthItem,
   Source,
   StdOutgoingMessageEnvelope,
-} from '@hexabot-ai/types';
-import { Inject, Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
-import { OnEvent } from '@nestjs/event-emitter';
-import { Request, Response } from 'express';
+} from "@hexabot-ai/types";
+import { Inject, Injectable } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
+import { OnEvent } from "@nestjs/event-emitter";
+import { Request, Response } from "express";
 
 import {
   FacebookInboundEventDecoder,
   createFacebookInboundEventDecoder,
-} from './inbound';
-import { FacebookAttachmentMessageInboundEvent } from './inbound/events';
+} from "./inbound";
+import { FacebookAttachmentMessageInboundEvent } from "./inbound/events";
 import {
   FacebookOutboundMessageEncoder,
   createFacebookOutboundMessageEncoder,
-} from './outbound';
-import { FacebookGraphApiService } from './services';
+} from "./outbound";
+import { FacebookGraphApiService } from "./services";
 import {
   FACEBOOK_CREDENTIAL_SETTING_KEYS,
   FACEBOOK_CHANNEL_NAME,
@@ -50,8 +50,8 @@ import {
   FacebookCredentialSettingKey,
   FacebookChannelSettings,
   FacebookResolvedChannelSettings,
-} from './settings.schema';
-import { Facebook } from './types';
+} from "./settings.schema";
+import { Facebook } from "./types";
 
 type RawBodyRequest = Request & {
   rawBody?: string | Buffer;
@@ -115,14 +115,14 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     source: Source,
   ): Promise<void> {
     const settings = await this.parseSettingsWithCredentials(source.settings, [
-      'verify_token',
+      "verify_token",
     ]);
-    const mode = this.getQueryParam(req, 'hub.mode');
-    const token = this.getQueryParam(req, 'hub.verify_token');
-    const challenge = this.getQueryParam(req, 'hub.challenge');
+    const mode = this.getQueryParam(req, "hub.mode");
+    const token = this.getQueryParam(req, "hub.verify_token");
+    const challenge = this.getQueryParam(req, "hub.challenge");
 
     if (
-      mode === 'subscribe' &&
+      mode === "subscribe" &&
       challenge !== null &&
       token === settings.verify_token &&
       settings.verify_token.length > 0
@@ -141,41 +141,41 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     source: Source,
   ): Promise<void> {
     const settings = await this.parseSettingsWithCredentials(source.settings, [
-      'app_secret',
+      "app_secret",
     ]);
 
     if (!settings.app_secret) {
-      throw new Error('Facebook app secret is required');
+      throw new Error("Facebook app secret is required");
     }
 
-    const sha256Signature = this.getHeader(req, 'x-hub-signature-256');
-    const sha1Signature = this.getHeader(req, 'x-hub-signature');
+    const sha256Signature = this.getHeader(req, "x-hub-signature-256");
+    const sha1Signature = this.getHeader(req, "x-hub-signature");
     const signature = sha256Signature ?? sha1Signature;
 
     if (!signature) {
-      throw new Error('Missing Facebook webhook signature');
+      throw new Error("Missing Facebook webhook signature");
     }
 
-    const [algorithm, digest] = signature.split('=');
+    const [algorithm, digest] = signature.split("=");
     const normalizedAlgorithm =
-      algorithm === 'sha256' ? 'sha256' : algorithm === 'sha1' ? 'sha1' : null;
+      algorithm === "sha256" ? "sha256" : algorithm === "sha1" ? "sha1" : null;
 
     if (!normalizedAlgorithm || !digest) {
-      throw new Error('Unsupported Facebook webhook signature');
+      throw new Error("Unsupported Facebook webhook signature");
     }
 
     const rawBody = (req as RawBodyRequest).rawBody;
 
     if (rawBody === undefined) {
-      throw new Error('Missing raw request body');
+      throw new Error("Missing raw request body");
     }
 
     const expected = createHmac(normalizedAlgorithm, settings.app_secret)
-      .update(typeof rawBody === 'string' ? rawBody : rawBody.toString('utf8'))
-      .digest('hex');
+      .update(typeof rawBody === "string" ? rawBody : rawBody.toString("utf8"))
+      .digest("hex");
 
     if (!this.safeCompareHex(digest, expected)) {
-      throw new Error('Invalid Facebook webhook signature');
+      throw new Error("Invalid Facebook webhook signature");
     }
   }
 
@@ -183,12 +183,12 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     const settings = this.parseSettings(source.settings);
     const payload = Facebook.webhookSchema.parse(req.body);
 
-    if (payload.object !== 'page') {
-      throw new Error('Unsupported Facebook webhook object');
+    if (payload.object !== "page") {
+      throw new Error("Unsupported Facebook webhook object");
     }
 
     const events = payload.entry.flatMap((entry) => {
-      const pageId = entry.id ?? '';
+      const pageId = entry.id ?? "";
 
       if (settings.page_id && pageId && settings.page_id !== pageId) {
         this.logger.warn(
@@ -236,12 +236,12 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   ): Promise<{ mid: string }> {
     const settings = await this.parseSettingsWithCredentials(
       event.getSourceSettings(),
-      ['page_access_token'],
+      ["page_access_token"],
     );
     const sourceId = event.getSourceId();
 
     if (!sourceId) {
-      throw new Error('Cannot send Facebook message without source id');
+      throw new Error("Cannot send Facebook message without source id");
     }
 
     const recipientId = event.getSenderForeignId();
@@ -257,7 +257,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
         message,
       });
 
-      return { mid: response.message_id ?? '' };
+      return { mid: response.message_id ?? "" };
     };
 
     if (options?.typing) {
@@ -267,16 +267,16 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
         await this.graphApi.sendSenderAction(
           settings,
           recipientId,
-          'typing_on',
+          "typing_on",
         );
         await this.sleep(timeout);
         await this.graphApi.sendSenderAction(
           settings,
           recipientId,
-          'typing_off',
+          "typing_off",
         );
       } catch (err) {
-        this.logger.error('Failed to send Facebook typing indicator', err);
+        this.logger.error("Failed to send Facebook typing indicator", err);
       }
     }
 
@@ -288,18 +288,18 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   ): Promise<SubscriberCreateDto> {
     const settings = await this.parseSettingsWithCredentials(
       event.getSourceSettings(),
-      ['page_access_token'],
+      ["page_access_token"],
     );
     const sourceId = event.getSourceId();
     const foreignId = event.getSenderForeignId();
     const profile = await this.getProfileSafe(settings, foreignId);
     const defaultLanguage = await this.getDefaultLanguageSafe();
-    const locale = profile.locale ?? '';
+    const locale = profile.locale ?? "";
 
     return {
       foreignId,
-      firstName: profile.first_name ?? 'Facebook',
-      lastName: profile.last_name ?? 'User',
+      firstName: profile.first_name ?? "Facebook",
+      lastName: profile.last_name ?? "User",
       assignedTo: null,
       assignedAt: null,
       lastvisit: new Date(),
@@ -309,14 +309,14 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
       language: locale.slice(0, 2) || defaultLanguage,
       locale,
       timezone:
-        typeof profile.timezone === 'number' &&
+        typeof profile.timezone === "number" &&
         Number.isFinite(profile.timezone)
           ? profile.timezone
           : 0,
       gender: profile.gender ?? null,
       country: null,
       labels: [],
-      source: sourceId ?? '',
+      source: sourceId ?? "",
     };
   }
 
@@ -325,7 +325,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   ) {
     const settings = await this.parseSettingsWithCredentials(
       event.getSourceSettings(),
-      ['page_access_token'],
+      ["page_access_token"],
     );
     const profile = await this.getProfileSafe(
       settings,
@@ -338,7 +338,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
 
     return await this.graphApi.downloadUrl(
       profile.profile_pic,
-      'facebook-avatar',
+      "facebook-avatar",
     );
   }
 
@@ -396,10 +396,10 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     }
 
     return {
-      status: 'unhealthy',
-      reason: 'facebook.missing_required_settings',
+      status: "unhealthy",
+      reason: "facebook.missing_required_settings",
       message: `${missingSecrets.length} active Facebook source${
-        missingSecrets.length === 1 ? '' : 's'
+        missingSecrets.length === 1 ? "" : "s"
       } missing required settings.`,
       details: {
         activeSources: activeSources.length,
@@ -409,8 +409,8 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     } satisfies Partial<IntegrationHealthItem>;
   }
 
-  @OnEvent('hook:source:postCreate', { async: true })
-  @OnEvent('hook:source:postUpdate', { async: true })
+  @OnEvent("hook:source:postCreate", { async: true })
+  @OnEvent("hook:source:postUpdate", { async: true })
   async handleSourceMutated(event: EntityHookPayload<Source>): Promise<void> {
     const source = event.entity;
 
@@ -421,7 +421,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     await this.syncSourceMessengerProfile(source);
   }
 
-  @OnEvent('hook:menu:*', { async: true })
+  @OnEvent("hook:menu:*", { async: true })
   async handleMenuMutated(): Promise<void> {
     const sources = await this.sourceService.find({
       where: {
@@ -435,7 +435,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     );
   }
 
-  @OnEvent('hook:subscriber:postUpdate', { async: true })
+  @OnEvent("hook:subscriber:postUpdate", { async: true })
   async handleSubscriberUpdated(event: EntityHookPayload<Record<string, any>>) {
     const subscriber = event.entity;
     const previous = event.databaseEntity;
@@ -457,7 +457,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     }
 
     const settings = await this.parseSettingsWithCredentials(source.settings, [
-      'page_access_token',
+      "page_access_token",
     ]);
 
     if (!settings.page_access_token) {
@@ -506,7 +506,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
 
   private async syncSourceMessengerProfile(source: Source): Promise<void> {
     const settings = await this.parseSettingsWithCredentials(source.settings, [
-      'page_access_token',
+      "page_access_token",
     ]);
 
     if (!source.state || !settings.sync_messenger_profile) {
@@ -527,12 +527,12 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     if (settings.greeting_text.trim()) {
       profile.greeting = [
         {
-          locale: 'default',
+          locale: "default",
           text: settings.greeting_text.trim(),
         },
       ];
     } else {
-      fieldsToDelete.push('greeting');
+      fieldsToDelete.push("greeting");
     }
 
     if (settings.get_started_button.trim()) {
@@ -540,7 +540,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
         payload: settings.get_started_button.trim(),
       };
     } else {
-      fieldsToDelete.push('get_started');
+      fieldsToDelete.push("get_started");
     }
 
     if (settings.persistent_menu) {
@@ -550,16 +550,16 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
       if (callToActions.length > 0) {
         profile.persistent_menu = [
           {
-            locale: 'default',
+            locale: "default",
             composer_input_disabled: settings.composer_input_disabled,
             call_to_actions: callToActions,
           },
         ];
       } else {
-        fieldsToDelete.push('persistent_menu');
+        fieldsToDelete.push("persistent_menu");
       }
     } else {
-      fieldsToDelete.push('persistent_menu');
+      fieldsToDelete.push("persistent_menu");
     }
 
     if (Object.keys(profile).length > 0) {
@@ -583,7 +583,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
         }
 
         result.push({
-          type: 'nested',
+          type: "nested",
           title: item.title,
           call_to_actions: callToActions.slice(0, 5),
         });
@@ -593,7 +593,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
 
       if (item.type === MenuType.web_url) {
         result.push({
-          type: 'web_url',
+          type: "web_url",
           title: item.title,
           url: this.ensureHttpUrl(item.url),
         });
@@ -602,7 +602,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
       }
 
       result.push({
-        type: 'postback',
+        type: "postback",
         title: item.title,
         payload: item.payload,
       });
@@ -632,7 +632,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     try {
       return (await this.languageService.getDefaultLanguage()).code;
     } catch {
-      return '';
+      return "";
     }
   }
 
@@ -641,10 +641,10 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     typing: boolean | number,
   ): number {
     const autoTimeout =
-      envelope.data && 'text' in envelope.data
+      envelope.data && "text" in envelope.data
         ? String(envelope.data.text).length * 10
         : 1000;
-    const timeout = typeof typing === 'number' ? typing : autoTimeout;
+    const timeout = typeof typing === "number" ? typing : autoTimeout;
 
     return Math.min(timeout, MAX_TYPING_DELAY_MS);
   }
@@ -675,7 +675,9 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
 
     await Promise.all(
       credentialKeys.map(async (key) => {
-        resolvedSettings[key] = await this.resolveCredentialValue(settings[key]);
+        resolvedSettings[key] = await this.resolveCredentialValue(
+          settings[key],
+        );
       }),
     );
 
@@ -686,7 +688,7 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     const id = credentialId.trim();
 
     if (!id) {
-      return '';
+      return "";
     }
 
     const value = await this.getCredentialService().findOneValue(id);
@@ -723,10 +725,10 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
     const value = req.query[key];
 
     if (Array.isArray(value)) {
-      return typeof value[0] === 'string' ? value[0] : null;
+      return typeof value[0] === "string" ? value[0] : null;
     }
 
-    return typeof value === 'string' ? value : null;
+    return typeof value === "string" ? value : null;
   }
 
   private getHeader(req: Request, key: string): string | null {
@@ -736,12 +738,12 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
       return value[0] ?? null;
     }
 
-    return typeof value === 'string' ? value : null;
+    return typeof value === "string" ? value : null;
   }
 
   private safeCompareHex(actual: string, expected: string): boolean {
-    const actualBuffer = Uint8Array.from(Buffer.from(actual, 'hex'));
-    const expectedBuffer = Uint8Array.from(Buffer.from(expected, 'hex'));
+    const actualBuffer = Uint8Array.from(Buffer.from(actual, "hex"));
+    const expectedBuffer = Uint8Array.from(Buffer.from(expected, "hex"));
 
     if (actualBuffer.length !== expectedBuffer.length) {
       return false;
@@ -765,14 +767,14 @@ export default class FacebookChannelHandler extends HttpChannelHandler<
   }
 
   private resolveEntityId(value: unknown): string | null {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       return value;
     }
 
-    if (value && typeof value === 'object' && 'id' in value) {
+    if (value && typeof value === "object" && "id" in value) {
       const id = (value as { id?: unknown }).id;
 
-      return typeof id === 'string' ? id : null;
+      return typeof id === "string" ? id : null;
     }
 
     return null;

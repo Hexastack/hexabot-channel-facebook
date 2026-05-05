@@ -4,7 +4,7 @@
  * Full terms: see LICENSE.md.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 export namespace Facebook {
   export type ChannelAttrs = {
@@ -103,30 +103,30 @@ export namespace Facebook {
   };
 
   export type QuickReply = {
-    content_type: 'text';
+    content_type: "text";
     title: string;
     payload: string;
   };
 
   export type Button =
     | {
-        type: 'postback';
+        type: "postback";
         title: string;
         payload: string;
       }
     | {
-        type: 'web_url';
+        type: "web_url";
         title: string;
         url: string;
         messenger_extensions?: boolean;
-        webview_height_ratio?: 'compact' | 'tall' | 'full';
+        webview_height_ratio?: "compact" | "tall" | "full";
       };
 
   export type GenericElement = {
     title: string;
     subtitle?: string;
     image_url?: string;
-    default_action?: Extract<Button, { type: 'web_url' }>;
+    default_action?: Extract<Button, { type: "web_url" }>;
     buttons?: Button[];
   };
 
@@ -137,9 +137,9 @@ export namespace Facebook {
       }
     | {
         attachment: {
-          type: 'template';
+          type: "template";
           payload: {
-            template_type: 'button';
+            template_type: "button";
             text: string;
             buttons: Button[];
           };
@@ -147,16 +147,16 @@ export namespace Facebook {
       }
     | {
         attachment: {
-          type: 'template';
+          type: "template";
           payload: {
-            template_type: 'generic';
+            template_type: "generic";
             elements: GenericElement[];
           };
         };
       }
     | {
         attachment: {
-          type: 'image' | 'audio' | 'video' | 'file';
+          type: "image" | "audio" | "video" | "file";
           payload: {
             url: string;
             is_reusable: boolean;
@@ -168,8 +168,8 @@ export namespace Facebook {
   export type SendApiPayload = {
     recipient: SendApiRecipient;
     message?: OutboundMessage;
-    sender_action?: 'typing_on' | 'typing_off';
-    messaging_type?: 'RESPONSE' | 'UPDATE' | 'MESSAGE_TAG';
+    sender_action?: "typing_on" | "typing_off";
+    messaging_type?: "RESPONSE" | "UPDATE" | "MESSAGE_TAG";
     tag?: string;
   };
 
@@ -179,10 +179,10 @@ export namespace Facebook {
   };
 
   export type MessengerProfile = {
-    greeting?: Array<{ locale: 'default'; text: string }>;
+    greeting?: Array<{ locale: "default"; text: string }>;
     get_started?: { payload: string };
     persistent_menu?: Array<{
-      locale: 'default';
+      locale: "default";
       composer_input_disabled: boolean;
       call_to_actions: MessengerProfileMenuItem[];
     }>;
@@ -190,17 +190,17 @@ export namespace Facebook {
 
   export type MessengerProfileMenuItem =
     | {
-        type: 'nested';
+        type: "nested";
         title: string;
         call_to_actions: MessengerProfileMenuItem[];
       }
     | {
-        type: 'postback';
+        type: "postback";
         title: string;
         payload: string;
       }
     | {
-        type: 'web_url';
+        type: "web_url";
         title: string;
         url: string;
       };

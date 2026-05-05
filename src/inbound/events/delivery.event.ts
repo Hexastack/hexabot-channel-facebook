@@ -4,12 +4,12 @@
  * Full terms: see LICENSE.md.
  */
 
-import { ChannelInboundEventContext, ChannelName } from '@hexabot-ai/api';
-import { StdEventType } from '@hexabot-ai/types';
+import { ChannelInboundEventContext, ChannelName } from "@hexabot-ai/api";
+import { StdEventType } from "@hexabot-ai/types";
 
-import { Facebook } from '../../types';
+import { Facebook } from "../../types";
 
-import BaseFacebookInboundEvent from './base-facebook-inbound.event';
+import BaseFacebookInboundEvent from "./base-facebook-inbound.event";
 
 export class FacebookDeliveryInboundEvent<
   N extends ChannelName = ChannelName,

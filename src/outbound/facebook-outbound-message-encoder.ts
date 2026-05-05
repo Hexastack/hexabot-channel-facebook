@@ -9,7 +9,7 @@ import {
   ChannelOutboundMessageEncoder,
   ContentOrmEntity,
   I18nService,
-} from '@hexabot-ai/api';
+} from "@hexabot-ai/api";
 import {
   ActionOptions,
   AttachmentRef,
@@ -24,10 +24,10 @@ import {
   StdOutgoingMessageEnvelope,
   StdOutgoingQuickRepliesMessageData,
   StdOutgoingTextMessageData,
-} from '@hexabot-ai/types';
-import { Injectable, Type } from '@nestjs/common';
+} from "@hexabot-ai/types";
+import { Injectable, Type } from "@nestjs/common";
 
-import { Facebook } from '../types';
+import { Facebook } from "../types";
 
 export type FacebookSourceScopedEncodeOptions = ActionOptions & {
   sourceId: string;
@@ -53,7 +53,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
     options: FacebookSourceScopedEncodeOptions,
   ): Promise<Facebook.OutboundMessage> {
     if (!options?.sourceId) {
-      throw new Error('Missing sourceId in outbound encode options');
+      throw new Error("Missing sourceId in outbound encode options");
     }
 
     return await this.dispatchEnvelope(envelope, options, {
@@ -92,14 +92,14 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
     message: StdOutgoingButtonsMessageData,
   ): Facebook.OutboundMessage {
     if (message.buttons.length === 0) {
-      throw new Error('Messenger button template requires at least one button');
+      throw new Error("Messenger button template requires at least one button");
     }
 
     return {
       attachment: {
-        type: 'template',
+        type: "template",
         payload: {
-          template_type: 'button',
+          template_type: "button",
           text: message.text,
           buttons: this.encodeButtons(message.buttons),
         },
@@ -139,7 +139,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
     options: FacebookSourceScopedEncodeOptions,
   ): Promise<Facebook.OutboundMessage> {
     if (!message.elements.length) {
-      throw new Error('Messenger list message requires at least one element');
+      throw new Error("Messenger list message requires at least one element");
     }
 
     const elements = await this.encodeContentElements(
@@ -168,7 +168,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
   ): Promise<Facebook.OutboundMessage> {
     if (!message.elements.length) {
       throw new Error(
-        'Messenger carousel message requires at least one element',
+        "Messenger carousel message requires at least one element",
       );
     }
 
@@ -187,9 +187,9 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
   ): Facebook.OutboundMessage {
     return {
       attachment: {
-        type: 'template',
+        type: "template",
         payload: {
-          template_type: 'generic',
+          template_type: "generic",
           elements,
         },
       },
@@ -197,7 +197,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
   }
 
   private encodeQuickReplies(
-    quickReplies: StdOutgoingQuickRepliesMessageData['quickReplies'],
+    quickReplies: StdOutgoingQuickRepliesMessageData["quickReplies"],
   ): Facebook.QuickReply[] {
     if (quickReplies.length > MESSENGER_QUICK_REPLY_LIMIT) {
       throw new Error(
@@ -206,7 +206,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
     }
 
     return quickReplies.map((quickReply) => ({
-      content_type: 'text',
+      content_type: "text",
       title: quickReply.title,
       payload: quickReply.payload,
     }));
@@ -225,7 +225,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
   private encodeButton(button: Button): Facebook.Button {
     if (button.type === ButtonType.web_url) {
       return {
-        type: 'web_url',
+        type: "web_url",
         title: button.title,
         url: this.ensureHttpUrl(button.url),
         messenger_extensions: button.messenger_extensions,
@@ -234,7 +234,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
     }
 
     return {
-      type: 'postback',
+      type: "postback",
       title: button.title,
       payload: button.payload,
     };
@@ -245,7 +245,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
     options: FacebookSourceScopedEncodeOptions,
   ): Promise<Facebook.GenericElement[]> {
     if (!options.content?.fields) {
-      throw new Error('Content options are missing the fields');
+      throw new Error("Content options are missing the fields");
     }
 
     const fields = options.content.fields;
@@ -265,7 +265,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
       if (fields.image_url && item[fields.image_url]) {
         const value = item[fields.image_url];
         const attachmentRef =
-          typeof value === 'string'
+          typeof value === "string"
             ? { url: value }
             : (value as { payload?: AttachmentRef }).payload;
 
@@ -286,8 +286,8 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
       if (encodedButtons.length > 0) {
         element.buttons = encodedButtons;
         const defaultAction = encodedButtons.find(
-          (button): button is Extract<Facebook.Button, { type: 'web_url' }> =>
-            button.type === 'web_url',
+          (button): button is Extract<Facebook.Button, { type: "web_url" }> =>
+            button.type === "web_url",
         );
 
         if (defaultAction) {
@@ -305,7 +305,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
     button: Button,
     index: number,
     item: ContentElement,
-    fields: NonNullable<FacebookSourceScopedEncodeOptions['content']>['fields'],
+    fields: NonNullable<FacebookSourceScopedEncodeOptions["content"]>["fields"],
   ): Facebook.Button {
     const btn = { ...button };
 
@@ -331,7 +331,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
     }
 
     const payload =
-      'action_payload' in fields &&
+      "action_payload" in fields &&
       fields.action_payload &&
       fields.action_payload in item
         ? `${btn.title}:${this.stringifyField(item[fields.action_payload])}`
@@ -345,12 +345,12 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
 
   private encodeViewMoreElement(): Facebook.GenericElement {
     return {
-      title: this.i18n.t('View More'),
+      title: this.i18n.t("View More"),
       buttons: [
         {
-          type: 'postback',
-          title: this.i18n.t('View More'),
-          payload: 'VIEW_MORE',
+          type: "postback",
+          title: this.i18n.t("View More"),
+          payload: "VIEW_MORE",
         },
       ],
     };
@@ -358,7 +358,7 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
 
   private toMessengerAttachmentType(
     fileType: FileType,
-  ): 'image' | 'audio' | 'video' | 'file' {
+  ): "image" | "audio" | "video" | "file" {
     if (
       fileType === FileType.image ||
       fileType === FileType.audio ||
@@ -367,11 +367,11 @@ export class FacebookOutboundMessageEncoder extends ChannelOutboundMessageEncode
       return fileType;
     }
 
-    return 'file';
+    return "file";
   }
 
   private stringifyField(value: unknown): string {
-    return value === undefined || value === null ? '' : String(value);
+    return value === undefined || value === null ? "" : String(value);
   }
 
   private ensureHttpUrl(url: string): string {

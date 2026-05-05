@@ -4,7 +4,7 @@
  * Full terms: see LICENSE.md.
  */
 
-import { FACEBOOK_CHANNEL_NAME } from './settings.schema';
+import { FACEBOOK_CHANNEL_NAME } from "./settings.schema";
 
 declare global {
   interface SubscriberChannelDict {
@@ -16,5 +16,4 @@ declare global {
   }
 }
 
-export { };
-
+export {};

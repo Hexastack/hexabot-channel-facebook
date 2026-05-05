@@ -4,14 +4,14 @@
  * Full terms: see LICENSE.md.
  */
 
-import { createHmac } from 'crypto';
+import { createHmac } from "crypto";
 
-import type { Source } from '@hexabot-ai/types';
-import { Request, Response } from 'express';
+import type { Source } from "@hexabot-ai/types";
+import { Request, Response } from "express";
 
-import { FacebookInboundEventDecoder } from '../inbound';
-import FacebookChannelHandler from '../index.channel';
-import { FACEBOOK_CHANNEL_NAME } from '../settings.schema';
+import { FacebookInboundEventDecoder } from "../inbound";
+import FacebookChannelHandler from "../index.channel";
+import { FACEBOOK_CHANNEL_NAME } from "../settings.schema";
 
 class TestFacebookChannelHandler extends FacebookChannelHandler {
   callVerifySignature(req: Request, source: Source) {
@@ -28,20 +28,20 @@ class TestFacebookChannelHandler extends FacebookChannelHandler {
 }
 
 const source = {
-  id: 'source-1',
+  id: "source-1",
   channel: FACEBOOK_CHANNEL_NAME,
   state: true,
   settings: {
-    app_secret: 'credential-app-secret',
-    page_access_token: 'credential-page-token',
-    verify_token: 'credential-verify-token',
-    page_id: 'page-1',
+    app_secret: "credential-app-secret",
+    page_access_token: "credential-page-token",
+    verify_token: "credential-verify-token",
+    page_id: "page-1",
   },
 } as unknown as Source;
 const credentialValues: Record<string, string> = {
-  'credential-app-secret': 'secret',
-  'credential-page-token': 'page-token',
-  'credential-verify-token': 'verify-token',
+  "credential-app-secret": "secret",
+  "credential-page-token": "page-token",
+  "credential-verify-token": "verify-token",
 };
 const buildRequest = (body: unknown, headers: Record<string, string> = {}) =>
   ({
@@ -51,7 +51,7 @@ const buildRequest = (body: unknown, headers: Record<string, string> = {}) =>
     query: {},
   }) as Request & { rawBody: string };
 
-describe('FacebookChannelHandler webhook security', () => {
+describe("FacebookChannelHandler webhook security", () => {
   let handler: TestFacebookChannelHandler;
 
   beforeEach(() => {
@@ -62,7 +62,7 @@ describe('FacebookChannelHandler webhook security', () => {
     };
     (handler as any).credentialService = {
       findOneValue: jest.fn(
-        async (credentialId: string) => credentialValues[credentialId] ?? '',
+        async (credentialId: string) => credentialValues[credentialId] ?? "",
       ),
     };
     (handler as any).inboundEventDecoder = new FacebookInboundEventDecoder(
@@ -70,47 +70,47 @@ describe('FacebookChannelHandler webhook security', () => {
     );
   });
 
-  it('accepts a valid SHA-256 webhook signature', async () => {
-    const req = buildRequest({ object: 'page', entry: [] });
-    const digest = createHmac('sha256', 'secret')
+  it("accepts a valid SHA-256 webhook signature", async () => {
+    const req = buildRequest({ object: "page", entry: [] });
+    const digest = createHmac("sha256", "secret")
       .update(req.rawBody)
-      .digest('hex');
-    req.headers['x-hub-signature-256'] = `sha256=${digest}`;
+      .digest("hex");
+    req.headers["x-hub-signature-256"] = `sha256=${digest}`;
 
     await expect(
       handler.callVerifySignature(req, source),
     ).resolves.toBeUndefined();
   });
 
-  it('rejects an invalid webhook signature', async () => {
+  it("rejects an invalid webhook signature", async () => {
     const req = buildRequest(
-      { object: 'page', entry: [] },
-      { 'x-hub-signature-256': 'sha256=bad' },
+      { object: "page", entry: [] },
+      { "x-hub-signature-256": "sha256=bad" },
     );
 
     await expect(handler.callVerifySignature(req, source)).rejects.toThrow(
-      'Invalid Facebook webhook signature',
+      "Invalid Facebook webhook signature",
     );
   });
 
-  it('supports legacy SHA-1 signatures when SHA-256 is absent', async () => {
-    const req = buildRequest({ object: 'page', entry: [] });
-    const digest = createHmac('sha1', 'secret')
+  it("supports legacy SHA-1 signatures when SHA-256 is absent", async () => {
+    const req = buildRequest({ object: "page", entry: [] });
+    const digest = createHmac("sha1", "secret")
       .update(req.rawBody)
-      .digest('hex');
-    req.headers['x-hub-signature'] = `sha1=${digest}`;
+      .digest("hex");
+    req.headers["x-hub-signature"] = `sha1=${digest}`;
 
     await expect(
       handler.callVerifySignature(req, source),
     ).resolves.toBeUndefined();
   });
 
-  it('responds to valid webhook verification challenges', async () => {
+  it("responds to valid webhook verification challenges", async () => {
     const req = {
       query: {
-        'hub.mode': 'subscribe',
-        'hub.verify_token': 'verify-token',
-        'hub.challenge': 'challenge-code',
+        "hub.mode": "subscribe",
+        "hub.verify_token": "verify-token",
+        "hub.challenge": "challenge-code",
       },
     } as unknown as Request;
     const res = {
@@ -121,22 +121,22 @@ describe('FacebookChannelHandler webhook security', () => {
     await handler.callVerifyWebhook(req, res, source);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalledWith('challenge-code');
+    expect(res.send).toHaveBeenCalledWith("challenge-code");
   });
 
-  it('drops webhook events for another configured page', async () => {
+  it("drops webhook events for another configured page", async () => {
     const req = buildRequest({
-      object: 'page',
+      object: "page",
       entry: [
         {
-          id: 'other-page',
+          id: "other-page",
           messaging: [
             {
-              sender: { id: 'user-1' },
-              recipient: { id: 'other-page' },
+              sender: { id: "user-1" },
+              recipient: { id: "other-page" },
               message: {
-                mid: 'm-1',
-                text: 'hello',
+                mid: "m-1",
+                text: "hello",
               },
             },
           ],

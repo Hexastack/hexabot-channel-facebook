@@ -4,16 +4,16 @@
  * Full terms: see LICENSE.md.
  */
 
-export { default as FacebookChannelHandler } from './index.channel';
+export { default as FacebookChannelHandler } from "./index.channel";
 
-export * from './globals';
+export * from "./globals";
 
-export * from './inbound';
+export * from "./inbound";
 
-export * from './outbound';
+export * from "./outbound";
 
-export * from './services';
+export * from "./services";
 
-export * from './settings.schema';
+export * from "./settings.schema";
 
-export * from './types';
+export * from "./types";
